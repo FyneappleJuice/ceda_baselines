@@ -168,10 +168,19 @@ class ReplayBuffer:
         return len(self.data)
 
     def push(self, transition):
+        # Store big observation arrays as float16 to halve buffer RAM
+        # (values are normalised or small integers; TD math upcasts to
+        # float32 in _collate).  Scalars are left alone.
+        compact = {}
+        for k, v in transition.items():
+            if isinstance(v, np.ndarray) and v.size > 1 and v.dtype == np.float32:
+                compact[k] = v.astype(np.float16)
+            else:
+                compact[k] = v
         if len(self.data) < self.capacity:
-            self.data.append(transition)
+            self.data.append(compact)
         else:
-            self.data[self.pos] = transition
+            self.data[self.pos] = compact
         self.pos = (self.pos + 1) % self.capacity
 
     def sample(self, batch_size):
