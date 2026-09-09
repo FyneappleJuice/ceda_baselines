@@ -17,6 +17,7 @@ import json
 import os
 import random
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -297,6 +298,8 @@ def base_arg_parser(algo_name):
                    help=f"0..{FULL_STAGE}; default {FULL_STAGE} (full mission).")
     p.add_argument("--eval-every", type=int, default=250)
     p.add_argument("--eval-episodes", type=int, default=20)
+    p.add_argument("--heartbeat", type=int, default=20,
+                   help="Print a training progress line every N episodes.")
     p.add_argument("--warmup", type=int, default=5000)
     p.add_argument("--train-every", type=int, default=1,
                    help="Gradient update every N environment steps.")
@@ -313,3 +316,14 @@ def base_arg_parser(algo_name):
 
 def utc_now():
     return datetime.now(timezone.utc).isoformat()
+
+
+def heartbeat_line(tag, episode, global_step, history, start_time, every):
+    """Compact per-N-episode progress line so long runs are observable."""
+    window = history[-every:]
+    rr = float(np.mean([h["train_reward"] for h in window])) if window else 0.0
+    sps = global_step / max(1e-9, time.time() - start_time)
+    eps = window[-1].get("epsilon") if window else None
+    eps_s = f"  eps {eps:.2f}" if eps is not None else ""
+    return (f"[{tag}] ep {episode:>6}  step {global_step:>9}  "
+            f"train_R(mean{len(window)}) {rr:9.1f}  {sps:5.0f} steps/s{eps_s}")

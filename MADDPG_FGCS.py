@@ -276,6 +276,11 @@ def train(args):
 
         history.append(rec)
 
+        if args.heartbeat and episode % args.heartbeat == 0 \
+                and (not args.eval_every or episode % args.eval_every != 0):
+            print(bc.heartbeat_line("MADDPG", episode, global_step, history,
+                                    start, args.heartbeat), flush=True)
+
         if args.checkpoint_every and episode % args.checkpoint_every == 0:
             torch.save(agent.state_dict(), out_dir / "maddpg_agent_FGCS.pth")
             bc.write_json(out_dir / "MADDPG_FGCS_metrics.json", {
@@ -305,6 +310,7 @@ def main():
         args.batch_size = 16
         args.buffer = 2000
         args.eval_every = 3
+        args.heartbeat = 2
         args.eval_episodes = 2
         args.checkpoint_every = 3
     train(args)
