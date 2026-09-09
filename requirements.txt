@@ -1,0 +1,5 @@
+# Baselines need only these. Install a CUDA build of torch on the GPU box:
+#   pip install torch --index-url https://download.pytorch.org/whl/cu124
+torch>=2.2
+numpy>=1.24
+pygame-ce>=2.5    # CEDA-FGCS.py imports pygame; never displayed (CEDA_HEADLESS=1)
